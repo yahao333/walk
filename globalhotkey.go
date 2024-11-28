@@ -6,8 +6,7 @@ package walk
 import (
 	"sync"
 	"sync/atomic"
-
-	"github.com/lxn/win"
+	"syscall"
 )
 
 // Windows hotkey modifiers
@@ -17,6 +16,15 @@ const (
 	modShift    = 0x0004
 	modWin      = 0x0008
 	modNoRepeat = 0x4000
+)
+
+var (
+	// Library
+	user32 = syscall.NewLazyDLL("user32.dll")
+
+	// Functions
+	registerHotKey   = user32.NewProc("RegisterHotKey")
+	unregisterHotKey = user32.NewProc("UnregisterHotKey")
 )
 
 var (
@@ -47,7 +55,14 @@ func RegisterGlobalHotKey(window *WindowBase, shortcut Shortcut, handler func())
 		modifiers |= modAlt
 	}
 
-	if !win.RegisterHotKey(window.hWnd, int32(id), modifiers, uint32(shortcut.Key)) {
+	ret, _, _ := registerHotKey.Call(
+		uintptr(window.hWnd),
+		uintptr(id),
+		uintptr(modifiers),
+		uintptr(shortcut.Key),
+	)
+
+	if ret == 0 {
 		return nil, newError("RegisterHotKey failed")
 	}
 
@@ -64,7 +79,12 @@ func RegisterGlobalHotKey(window *WindowBase, shortcut Shortcut, handler func())
 
 // Unregister unregisters the global hotkey
 func (h *GlobalHotKey) Unregister() error {
-	if !win.UnregisterHotKey(h.window.hWnd, int32(h.id)) {
+	ret, _, _ := unregisterHotKey.Call(
+		uintptr(h.window.hWnd),
+		uintptr(h.id),
+	)
+
+	if ret == 0 {
 		return newError("UnregisterHotKey failed")
 	}
 	hotkeys.Delete(h.id)
