@@ -158,3 +158,21 @@ defer hotkey.Unregister()
 ```
 
 And then press `Ctrl+Alt+H` to see the message box.
+
+Minimizing Event
+===============
+
+Walk also supports the minimizing event.
+
+```go
+// Subscribe to minimizing event
+window.Minimizing().Attach(func(e *MinimizingEvent) {
+    // Ask user if they want to minimize
+    if walk.MsgBox(window, "Confirm", "Do you want to minimize the window?",
+        walk.MsgBoxYesNo|walk.MsgBoxIconQuestion) != walk.DlgCmdYes {
+        
+        // Cancel minimizing if user says no
+        e.data.Cancel = true
+    }
+})
+```
