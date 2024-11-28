@@ -10,6 +10,15 @@ import (
 	"github.com/lxn/win"
 )
 
+// Windows hotkey modifiers
+const (
+	modAlt      = 0x0001
+	modControl  = 0x0002
+	modShift    = 0x0004
+	modWin      = 0x0008
+	modNoRepeat = 0x4000
+)
+
 var (
 	nextHotkeyID uint32
 	hotkeys      sync.Map // map[uint32]*GlobalHotKey
@@ -29,13 +38,13 @@ func RegisterGlobalHotKey(window *WindowBase, shortcut Shortcut, handler func())
 
 	modifiers := uint32(0)
 	if shortcut.Modifiers&ModShift != 0 {
-		modifiers |= win.MOD_SHIFT
+		modifiers |= modShift
 	}
 	if shortcut.Modifiers&ModControl != 0 {
-		modifiers |= win.MOD_CONTROL
+		modifiers |= modControl
 	}
 	if shortcut.Modifiers&ModAlt != 0 {
-		modifiers |= win.MOD_ALT
+		modifiers |= modAlt
 	}
 
 	if !win.RegisterHotKey(window.hWnd, int32(id), modifiers, uint32(shortcut.Key)) {
