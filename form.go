@@ -50,6 +50,7 @@ type Form interface {
 	Run() int
 	Starting() *Event
 	Closing() *CloseEvent
+	Minimizing() *CancelEvent
 	Activating() *Event
 	Deactivating() *Event
 	Activate() error
@@ -91,6 +92,7 @@ type FormBase struct {
 	startingPublisher           EventPublisher
 	titleChangedPublisher       EventPublisher
 	iconChangedPublisher        EventPublisher
+	minimizingPublisher         CancelEventPublisher
 	progressIndicator           *ProgressIndicator
 	icon                        Image
 	prevFocusHWnd               win.HWND
@@ -669,6 +671,10 @@ func (fb *FormBase) Closing() *CloseEvent {
 	return fb.closingPublisher.Event()
 }
 
+func (fb *FormBase) Minimizing() *CancelEvent {
+	return fb.minimizingPublisher.Event()
+}
+
 func (fb *FormBase) ProgressIndicator() *ProgressIndicator {
 	return fb.progressIndicator
 }
@@ -896,6 +902,18 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 	case taskbarCreatedMsgId:
 		for ni := range notifyIcons {
 			ni.readdToTaskbar()
+		}
+	case win.WM_SYSCOMMAND:
+		if wParam == win.SC_MINIMIZE {
+			var canceled bool
+			fb.minimizingPublisher.Publish(&canceled)
+			if canceled {
+				return 0
+			}
+		}
+
+		if wParam == win.SC_CLOSE {
+			fb.closeReason = CloseReasonUser
 		}
 	}
 
