@@ -131,3 +131,30 @@ of runtime overhead coming from Go. As an alternative to this, you may compile W
 optional C implementation of the main message loop, by passing the `walk_use_cgo` build tag:
 
    go build -tags walk_use_cgo
+
+
+Global Hotkeys
+==============
+
+Walk supports global hotkeys.
+
+Example usage:
+
+```go
+// In your application:
+shortcut := walk.Shortcut{
+	Modifiers: walk.ModControl | walk.ModAlt,
+	Key:       walk.KeyH,
+}
+
+hotkey, err := walk.RegisterGlobalHotKey(window, shortcut, func() {
+	// Handle hotkey press
+	walk.MsgBox(window, "Hotkey", "Global hotkey pressed!", walk.MsgBoxIconInformation)
+})
+if err != nil {
+	log.Fatal(err)
+}
+defer hotkey.Unregister()
+```
+
+And then press `Ctrl+Alt+H` to see the message box.
