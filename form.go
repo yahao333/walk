@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build windows
 // +build windows
 
 package walk
@@ -707,6 +708,14 @@ func (fb *FormBase) startLayout() bool {
 
 func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case win.WM_HOTKEY:
+		if hotkey, ok := hotkeys.Load(uint32(wParam)); ok {
+			if h, ok := hotkey.(*GlobalHotKey); ok && h.handler != nil {
+				h.handler()
+			}
+		}
+		return 0
+
 	case win.WM_ACTIVATE:
 		switch win.LOWORD(uint32(wParam)) {
 		case win.WA_ACTIVE, win.WA_CLICKACTIVE:
