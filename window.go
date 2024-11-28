@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build windows
 // +build windows
 
 package walk
@@ -1237,6 +1238,24 @@ func windowText(hwnd win.HWND) string {
 func setWindowText(hwnd win.HWND, text string) error {
 	if win.TRUE != win.SendMessage(hwnd, win.WM_SETTEXT, 0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text)))) {
 		return newError("WM_SETTEXT failed")
+	}
+
+	return nil
+}
+
+// Restore restores the window from a minimized state and brings it to the foreground.
+// If the window is not minimized, it will just bring it to the foreground.
+func (w *WindowBase) Restore() error {
+	// If window is minimized, restore it
+	if win.IsIconic(w.hWnd) {
+		if !win.ShowWindow(w.hWnd, win.SW_RESTORE) {
+			return newError("ShowWindow failed")
+		}
+	}
+
+	// Bring window to foreground
+	if !win.SetForegroundWindow(w.hWnd) {
+		return newError("SetForegroundWindow failed")
 	}
 
 	return nil
