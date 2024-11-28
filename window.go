@@ -442,6 +442,7 @@ type WindowBase struct {
 	visible                   bool
 	enabled                   bool
 	acc                       *Accessibility
+	minimizing                *MinimizingEvent
 }
 
 var (
@@ -530,6 +531,27 @@ type windowCfg struct {
 	Style     uint32
 	ExStyle   uint32
 	Bounds    Rectangle
+}
+
+// MinimizingEventData contains event data for a window minimizing event.
+type MinimizingEventData struct {
+	// Cancel is the flag to prevent window minimizing when set to true.
+	Cancel bool
+}
+
+// MinimizingEvent represents a window minimizing event.
+type MinimizingEvent struct {
+	Event
+	data MinimizingEventData
+}
+
+// Minimizing returns the event that is published when the window is about to be minimized.
+func (wb *WindowBase) Minimizing() *MinimizingEvent {
+	if wb.minimizing == nil {
+		wb.minimizing = new(MinimizingEvent)
+	}
+
+	return wb.minimizing
 }
 
 // InitWindow initializes a window.
@@ -2523,6 +2545,19 @@ func (wb *WindowBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 
 		wb.window.Dispose()
 		wb.hWnd = 0
+
+	case win.WM_SYSCOMMAND:
+		if wParam == win.SC_MINIMIZE {
+			// Handle minimizing
+			if wb.minimizing != nil {
+				wb.minimizing.data = MinimizingEventData{Cancel: false}
+				wb.minimizing.Publish()
+
+				if wb.minimizing.data.Cancel {
+					return 0
+				}
+			}
+		}
 	}
 
 	if window != nil {
