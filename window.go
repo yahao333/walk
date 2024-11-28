@@ -541,7 +541,7 @@ type MinimizingEventData struct {
 
 // MinimizingEvent represents a window minimizing event.
 type MinimizingEvent struct {
-	Event
+	*EventHandler
 	data MinimizingEventData
 }
 
